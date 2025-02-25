@@ -7,6 +7,8 @@ import bodyParser from 'body-parser';
 import employeesRoutes from "./routes/employees.routes.js";
 import indexRoutes from "./routes/index.routes.js";
 import categoriesRoutes from "./routes/categories.routes.js";
+import productsRoutes from "./routes/products.routes.js";
+import inventorysRoutes from "./routes/inventory.routes.js";
 
 const app = express();
 
@@ -19,7 +21,8 @@ app.use(cors())
 app.use("/", indexRoutes);
 app.use("/api", employeesRoutes);
 app.use("/api/departament", categoriesRoutes);
-app.use("/api/products", categoriesRoutes);
+app.use("/api/products", productsRoutes);
+app.use("/api/inventory", inventorysRoutes);
 
 app.use((req, res, next) => {
     res.status(404).json({ message: "Not found" });
