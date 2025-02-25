@@ -1,4 +1,4 @@
-import { pool } from "../db.js";
+import { pool } from "../connect.js";
 
 export const getEmployees = async (req, res) => {
   try {
