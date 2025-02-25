@@ -2,11 +2,11 @@
   "name": "mysql-nodejs-rest-api",
   "version": "1.0.1",
   "description": "A simple REST API with Node.js, Express and MySQL",
-  "main": "src/app.js",
+  "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon src/app.js",
-    "start": "node src/app.js",
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
     "pretest": "cross-env NODE_ENV=test jest --clearCache"
   },
