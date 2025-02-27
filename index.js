@@ -8,3 +8,5 @@ import { PORT } from "./src/config.js";
 app.listen(PORT, () => {
     console.log("🚀 ~ app.listen ~ port", PORT)
 })
+
+

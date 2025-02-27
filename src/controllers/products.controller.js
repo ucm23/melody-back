@@ -35,45 +35,17 @@ export const deleteProduct = async (req, res) => {
 export const createProduct = async (req, res) => {
     try {
         const { 
-            code,
-            description,
-            mode_sale,
-            price_cost,
-            price_sale,
-            utility,
-            price_whole,
-            departament,
-            quanty_act,
-            quanty_min,
-         } = req.body;
+            code, description, mode_sale, price_cost, price_sale, utility, price_whole, departament, quanty_act, quanty_min, inventory_id
+        } = req.body;
+
         const rows = await pool.query(
-            `INSERT INTO products (
-                code,
-                description,
-                mode_sale,
-                price_cost,
-                price_sale,
-                utility,
-                price_whole,
-                departament,
-                quanty_act,
-                quanty_min
-            ) VALUES (
-             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
-             ) RETURNING id;`, [
-                code,
-                description,
-                mode_sale,
-                price_cost,
-                price_sale,
-                utility,
-                price_whole,
-                departament,
-                quanty_act,
-                quanty_min
-             ]);
-        res.status(201).json({ 
-            id: rows?.rows[0].id, 
+            `INSERT INTO products ( 
+                code, description, mode_sale, price_cost, price_sale, utility, price_whole, departament, quanty_act, quanty_min
+            ) VALUES ( $1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id;`, [ 
+                code, description, mode_sale, price_cost, price_sale, utility, price_whole, departament, quanty_act, quanty_min
+        ]);
+        let responseData = {
+            id: rows?.rows[0].id,
             code,
             description,
             mode_sale,
@@ -84,7 +56,16 @@ export const createProduct = async (req, res) => {
             departament,
             quanty_act,
             quanty_min
-        });
+        }
+        if (inventory_id) {
+            const sql = `INSERT INTO save_inventory (product, inventory) VALUES ($1, $2) RETURNING id;`
+            const save_inventory = await pool.query(sql, [rows?.rows[0].id, inventory_id])
+            responseData.inventory = {
+                id: save_inventory?.rows[0].id,
+                inventory_id
+            }
+        }
+        res.status(201).json(responseData);
     } catch (error) {
         return res.status(500).json({ message: "Something goes wrong" + error });
     }
@@ -93,7 +74,7 @@ export const createProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
-        const { 
+        const {
             code,
             description,
             mode_sale,
@@ -104,7 +85,7 @@ export const updateProduct = async (req, res) => {
             departament,
             quanty_act,
             quanty_min
-         } = req.body;
+        } = req.body;
         const result = await pool.query(
             `UPDATE products SET 
             code = COALESCE($1, code),
