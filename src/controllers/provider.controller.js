@@ -39,15 +39,16 @@ export const createProvider = async (req, res) => {
             phone,
             email,
             store_id,
-            company
+            company,
+            id_asiggned_me
         } = req.body;
         const rows = await pool.query(
             `INSERT INTO providers (
-                name, phone, email, store_id, company
+                name, phone, email, store_id, company, id_asiggned_me
             ) VALUES (
-             $1, $2, $3, $4, $5
+             $1, $2, $3, $4, $5, $6
             ) RETURNING id;`,
-            [name, phone, email, store_id, company]
+            [name, phone, email, store_id, company, id_asiggned_me]
         );
         res.status(201).json({
             id: rows?.rows[0].id,
