@@ -24,8 +24,8 @@ export const getProviders = async (req, res) => {
 
         // Si hay un parámetro de búsqueda, añadimos condiciones a las consultas
         if (search) {
-            queryCount += " AND name ILIKE $1 OR company ILIKE $1";
-            queryData += " AND name ILIKE $1 OR company ILIKE $1";
+            queryCount += " AND name ILIKE $1 OR last_name ILIKE $1 OR company ILIKE $1";
+            queryData += " AND name ILIKE $1 OR last_name ILIKE $1 OR company ILIKE $1";
             queryParams.push(`%${search}%`);
         }
 
@@ -163,7 +163,7 @@ export const createProvider = async (req, res) => {
                     state,
                     pais,
                 } = billing
-    
+
                 const sql_billing = `
                 INSERT INTO billing (
                     company, rfc, curp, address, no_e, no_i, cp, col, municipio, local, state, pais, provider_id
@@ -189,7 +189,7 @@ export const createProvider = async (req, res) => {
                         rows?.rows[0].id
                     ]
                 );
-    
+
                 res.status(201).json({
                     provider: {
                         id: rows?.rows[0].id,
@@ -211,22 +211,52 @@ export const createProvider = async (req, res) => {
 export const updateProvider = async (req, res) => {
     try {
         const { id } = req.params;
+        //const { name,phone, email } = req.body;
+        const {
+            provider,
+            billing
+        } = req.body;
+
         const {
             name,
+            last_name,
             phone,
-            email
-        } = req.body;
+            email,
+            comment,
+            company,
+            id_asiggned_me,
+            rfc,
+            curp
+        } = provider;
+
         const result = await pool.query(
             `UPDATE providers SET 
             name = COALESCE($1, name),
-            phone = COALESCE($2, phone),
-            email = COALESCE($3, email)
-            WHERE id = $4 RETURNING *`,
-            [name, phone, email, id]
+            last_name = COALESCE($2, last_name),
+            phone = COALESCE($3, phone),
+            email = COALESCE($4, email),
+            comment = COALESCE($5, comment),
+            company = COALESCE($6, company),
+            id_asiggned_me = COALESCE($7, id_asiggned_me),
+            rfc = COALESCE($8, rfc),
+            curp = COALESCE($9,curp)
+            WHERE id = $10 RETURNING *`,
+            [
+                name,
+                last_name,
+                phone,
+                email,
+                comment,
+                company,
+                id_asiggned_me,
+                rfc,
+                curp,
+                id
+            ]
         );
         console.log("🚀 ~ updateProviders ~ result?.rows[0]:", result?.rows[0])
         if (result?.rowCount === 0) return res.status(404).json({ message: "Providers not found" });
-        res.json(result?.rows[0]);
+        res.status(201).json(result?.rows[0]);
     } catch (error) {
         return res.status(500).json({ message: "Something goes wrong" + error });
     }
