@@ -92,6 +92,7 @@ export const createProvider = async (req, res) => {
             provider,
             billing
         } = req.body;
+        const { store_id } = req.params;
         console.log("🚀 ~ createProvider ~ req.body:", req.body)
         /*const {
             name
@@ -111,7 +112,6 @@ export const createProvider = async (req, res) => {
             curp,
             credit_limit,
             credit_days,
-            store_id,
         } = provider;
         console.log("🚀 ~ createProvider ~ provider:", provider)
         /**/
@@ -130,7 +130,7 @@ export const createProvider = async (req, res) => {
                 name,
                 phone,
                 email,
-                comment,
+                comment || null,
                 company,
                 id_asiggned_me,
                 rfc,
@@ -211,6 +211,7 @@ export const createProvider = async (req, res) => {
 export const updateProvider = async (req, res) => {
     try {
         const { id } = req.params;
+        const { store_id } = req.params;
         //const { name,phone, email } = req.body;
         const {
             provider,

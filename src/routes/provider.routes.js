@@ -7,7 +7,7 @@ router.get("/", getProviders);
 router.get("/:id", getProvider);
 router.get("/billing/:id", getBilling);
 router.delete("/:id", deleteProvider);
-router.post("/", createProvider);
+router.post("/:store_id", createProvider);
 router.patch("/:id", updateProvider);
 
 export default router;
