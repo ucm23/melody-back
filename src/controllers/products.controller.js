@@ -2,8 +2,38 @@ import { pool } from "../connect.js";
 
 export const getProducts = async (req, res) => {
     try {
-        const rows = await pool.query("SELECT * FROM products");
-        res.json(rows?.rows);
+        /*const rows = await pool.query("SELECT * FROM products");
+        res.json(rows?.rows);*/
+
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10;
+        const offset = (page - 1) * limit;
+        const search = req.query.search || '';
+        const store = parseInt(req.query.store)
+
+        let queryCount = `SELECT COUNT(*) FROM products WHERE store_id = ${store}`;
+        let queryData = `SELECT * FROM products WHERE store_id = ${store}`;
+        const queryParams = [];
+
+        if (search) {
+            queryCount += " AND description ILIKE $1";
+            queryData += " AND description ILIKE $1";
+            queryParams.push(`%${search}%`);
+        }
+
+        const totalQuery = await pool.query(queryCount, queryParams);
+        const total = parseInt(totalQuery.rows[0].count);
+
+        queryData += " LIMIT $" + (queryParams.length + 1) + " OFFSET $" + (queryParams.length + 2);
+        const paginatedQuery = await pool.query(queryData, [...queryParams, limit, offset]);
+        console.log("🚀 ~ getProducts ~ queryData:", queryData)
+        const data = paginatedQuery.rows;
+
+        res.json({
+            total,
+            page,
+            data
+        });
     } catch (error) {
         return res.status(500).json({ message: "Something goes wrong" + error });
     }

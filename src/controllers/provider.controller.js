@@ -11,34 +11,31 @@ import { pool } from "../connect.js";
 
 export const getProviders = async (req, res) => {
     try {
-        const page = parseInt(req.query.page) || 1; // Página solicitada (por defecto 1)
-        const limit = 10; // Número de elementos por página
-        const offset = (page - 1) * limit; // Cálculo del offset
-        const search = req.query.search || ''; // Parámetro de búsqueda (opcional)
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10;
+        const offset = (page - 1) * limit;
+        const search = req.query.search || '';
         const store = parseInt(req.query.store)
+        const isChecked = req.query.isChecked;
 
-        // Consulta base para contar y buscar
-        let queryCount = `SELECT COUNT(*) FROM providers WHERE store_id = ${store}`;
-        let queryData = `SELECT * FROM providers WHERE store_id = ${store}`;
+        let queryCount = `SELECT COUNT(*) FROM providers WHERE store_id = ${store} AND archive = ${isChecked}`;
+        let queryData = `SELECT * FROM providers WHERE store_id = ${store} AND archive = ${isChecked}`;
         const queryParams = [];
 
-        // Si hay un parámetro de búsqueda, añadimos condiciones a las consultas
         if (search) {
             queryCount += " AND name ILIKE $1 OR last_name ILIKE $1 OR company ILIKE $1";
             queryData += " AND name ILIKE $1 OR last_name ILIKE $1 OR company ILIKE $1";
             queryParams.push(`%${search}%`);
         }
 
-        // Consulta para obtener el total de proveedores (con o sin búsqueda)
         const totalQuery = await pool.query(queryCount, queryParams);
         const total = parseInt(totalQuery.rows[0].count);
 
-        // Consulta para obtener los proveedores paginados (con o sin búsqueda)
         queryData += " LIMIT $" + (queryParams.length + 1) + " OFFSET $" + (queryParams.length + 2);
         const paginatedQuery = await pool.query(queryData, [...queryParams, limit, offset]);
+        console.log("🚀 ~ getProviders ~ queryData:", queryData)
         const data = paginatedQuery.rows;
 
-        // Devolver el objeto con la estructura deseada
         res.json({
             total,
             page,
@@ -262,3 +259,24 @@ export const updateProvider = async (req, res) => {
         return res.status(500).json({ message: "Something goes wrong" + error });
     }
 };
+
+export const archiverProvider = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { archive  } = req.body;
+        const result = await pool.query(
+            `UPDATE providers SET 
+            archive = COALESCE($1, archive)
+            WHERE id = $2 RETURNING *`,
+            [
+                archive,
+                id
+            ]
+        );
+        console.log("🚀 ~ updateProviders ~ result?.rows[0]:", result?.rows[0])
+        if (result?.rowCount === 0) return res.status(404).json({ message: "Providers not found" });
+        res.status(201).json(result?.rows[0]);
+    } catch (error) {
+        return res.status(500).json({ message: "Something goes wrong" + error });
+    }
+}

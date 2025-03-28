@@ -2,7 +2,10 @@ import { pool } from "../connect.js";
 
 export const getInventorys = async (req, res) => {
     try {
-        const rows = await pool.query("SELECT * FROM inventory");
+        const store_id = req.query.store_id;
+        console.log("🚀 ~ getInventorys ~ req.params:", req.params)
+        const rows = await pool.query("SELECT * FROM inventory WHERE store_id = $1", [store_id]);
+        console.log("🚀 ~ getInventorys ~ rows:", rows)
         res.json(rows?.rows);
     } catch (error) {
         return res.status(500).json({ message: "Something goes wrong" + error });

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createProvider, deleteProvider, getProvider, getProviders, updateProvider, getBilling } from "../controllers/provider.controller.js";
+import { createProvider, deleteProvider, getProvider, getProviders, updateProvider, getBilling, archiverProvider } from "../controllers/provider.controller.js";
 
 const router = Router();
 
@@ -9,5 +9,6 @@ router.get("/billing/:id", getBilling);
 router.delete("/:id", deleteProvider);
 router.post("/:store_id", createProvider);
 router.patch("/:id", updateProvider);
+router.patch("/archiver/:id", archiverProvider);
 
 export default router;
