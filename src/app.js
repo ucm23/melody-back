@@ -13,6 +13,7 @@ import providersRoutes from "./routes/provider.routes.js";
 import employeesRoutes from "./routes/employees.routes.js";
 
 const app = express();
+const api = '/api'
 
 app.use(morgan("dev"));
 app.use(express.json());
@@ -21,13 +22,17 @@ app.use(bodyParser.urlencoded({ extended: true }));
 //app.use(express.urlencoded({ extended: true }));
 //app.use(express.static(path.join(__dirname, 'public')))
 app.use(cors())
-app.use("/", indexRoutes);
+app.use(`${api}/auth`, indexRoutes);
 //app.use("/api", employeesRoutes);
-app.use("/api/departament", categoriesRoutes);
-app.use("/api/products", productsRoutes);
-app.use("/api/inventory", inventorysRoutes);
-app.use("/api/provider", providersRoutes);
-app.use("/api/employees", employeesRoutes);
+app.use(`${api}/products`, productsRoutes);
+app.use(`${api}/warehouses`, categoriesRoutes);
+app.use(`${api}/departments`, categoriesRoutes);
+app.use(`${api}/movement-report`, categoriesRoutes);
+
+app.use(`${api}/inventory`, inventorysRoutes);
+app.use(`${api}/provider`, providersRoutes);
+app.use(`${api}/directory`, providersRoutes);
+app.use(`${api}/employees`, employeesRoutes);
 //app.use("/api/billing", providersRoutes);
 
 app.use((req, res, next) => {

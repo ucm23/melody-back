@@ -9,6 +9,105 @@ import { pool } from "../connect.js";
     }
 };*/
 
+const handlers = {
+    '1': 'providers',
+    '2': 'employees',
+    '3': 'employees',
+    '4': 'clients',
+};
+
+/*export const getProviders = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10;
+        const offset = (page - 1) * limit;
+        const search = req.query.search || '';
+        const store = parseInt(req.query.store);
+        const isChecked = req.query.isChecked === 'true';
+        const type = req.query.type;
+        const isManager = req.query.isManager === 'true'; 
+
+        if (!handlers[type] || isNaN(store)) {
+            return res.status(400).json({ message: "Invalid parameters" });
+        }
+
+        const table = handlers[type];
+        const queryParams = [];
+        let paramCounter = 1;
+
+        let whereClauses = [
+            `store_id = $${paramCounter++}`,
+            `archive = $${paramCounter++}`
+        ];
+        queryParams.push(store, isChecked);
+
+        let baseQuery = `FROM ${table}`;
+        
+        if (table === 'employees') {
+            baseQuery += ` JOIN roles ON roles.id = ${table}.role_id`;
+            whereClauses = [
+                `${table}.store_id = $${paramCounter++}`,
+                `${table}.archive = $${paramCounter++}`
+            ];
+        } else {
+            whereClauses = [
+                `store_id = $${paramCounter++}`,
+                `archive = $${paramCounter++}`
+            ];
+        }
+        queryParams.push(store, isChecked);
+
+        if (isManager) {
+            whereClauses.push(`manager = $${paramCounter++}`);
+            queryParams.push(true);
+        }
+
+        if (search) {
+            const searchParam = `%${search}%`;
+            whereClauses.push(
+                `(name ILIKE $${paramCounter} OR last_name ILIKE $${paramCounter} OR company ILIKE $${paramCounter})`
+            );
+            queryParams.push(searchParam, searchParam, searchParam);
+            paramCounter += 3;
+        }
+
+        const whereClause = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+        const countQuery = `SELECT COUNT(*) ${baseQuery} ${whereClause}`;
+        const totalQuery = await pool.query(countQuery, queryParams);
+        const total = parseInt(totalQuery.rows[0].count);
+
+        const selectFields = table === 'employees' 
+            ? `${table}.*, roles.name as role_name` 
+            : '*';
+            
+        const dataQuery = `
+            SELECT ${selectFields} 
+            ${baseQuery} 
+            ${whereClause}
+            LIMIT $${paramCounter++} OFFSET $${paramCounter++}
+        `;
+        
+        queryParams.push(limit, offset);
+        
+        const paginatedQuery = await pool.query(dataQuery, queryParams);
+        const data = paginatedQuery.rows;
+
+        res.json({
+            total,
+            page,
+            totalPages: Math.ceil(total / limit),
+            data
+        });
+    } catch (error) {
+        console.error("Error in getProviders:", error);
+        return res.status(500).json({ 
+            message: "Something went wrong",
+            error: error.message
+        });
+    }
+};*/
+
 export const getProviders = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -17,23 +116,42 @@ export const getProviders = async (req, res) => {
         const search = req.query.search || '';
         const store = parseInt(req.query.store)
         const isChecked = req.query.isChecked;
+        const type = req.query.type;
+        const isManager = req.query.isManager;
 
-        let queryCount = `SELECT COUNT(*) FROM providers WHERE store_id = ${store} AND archive = ${isChecked}`;
-        let queryData = `SELECT * FROM providers WHERE store_id = ${store} AND archive = ${isChecked}`;
+        const table = handlers[type];
+
+        let queryCount = `SELECT COUNT(*) FROM ${table} WHERE store_id = ${store} AND archive = ${isChecked}`;
+        let queryData = `SELECT * FROM ${table} WHERE store_id = ${store} AND archive = ${isChecked}`;
+        if (table == 'employees') {
+            queryCount = `SELECT COUNT(*) FROM ${table} LEFT JOIN roles ON roles.id = ${table}.role_id WHERE ${table}.store_id = ${store} AND archive = ${isChecked}`;
+            queryData = `SELECT * FROM ${table} LEFT JOIN roles ON roles.id = ${table}.role_id WHERE ${table}.store_id = ${store} AND archive = ${isChecked}`;
+        }
+        if (isManager) {
+            queryCount += " AND manager = true";
+            queryData += " AND manager = true";
+        }
         const queryParams = [];
 
         if (search) {
-            queryCount += " AND name ILIKE $1 OR last_name ILIKE $1 OR company ILIKE $1";
-            queryData += " AND name ILIKE $1 OR last_name ILIKE $1 OR company ILIKE $1";
+            if (table == 'providers') {
+                queryCount += " AND name ILIKE $1 OR last_name ILIKE $1 OR company ILIKE $1";
+                queryData += " AND name ILIKE $1 OR last_name ILIKE $1 OR company ILIKE $1";
+            } else {
+                queryCount += " AND name ILIKE $1 OR last_name ILIKE $1";
+                queryData += " AND name ILIKE $1 OR last_name ILIKE $1";
+            }
             queryParams.push(`%${search}%`);
+
         }
 
+        console.log("🚀 ~ getProviders ~ queryData:", queryData)
         const totalQuery = await pool.query(queryCount, queryParams);
         const total = parseInt(totalQuery.rows[0].count);
 
         queryData += " LIMIT $" + (queryParams.length + 1) + " OFFSET $" + (queryParams.length + 2);
         const paginatedQuery = await pool.query(queryData, [...queryParams, limit, offset]);
-        console.log("🚀 ~ getProviders ~ queryData:", queryData)
+
         const data = paginatedQuery.rows;
 
         res.json({
@@ -42,6 +160,7 @@ export const getProviders = async (req, res) => {
             data
         });
     } catch (error) {
+        console.log("🚀 ~ getProviders ~ error:", error)
         return res.status(500).json({ message: "Something goes wrong: " + error.message });
     }
 };
@@ -263,7 +382,7 @@ export const updateProvider = async (req, res) => {
 export const archiverProvider = async (req, res) => {
     try {
         const { id } = req.params;
-        const { archive  } = req.body;
+        const { archive } = req.body;
         const result = await pool.query(
             `UPDATE providers SET 
             archive = COALESCE($1, archive)
