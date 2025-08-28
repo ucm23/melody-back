@@ -35,6 +35,8 @@ app.use(`${api}/directory`, providersRoutes);
 app.use(`${api}/employees`, employeesRoutes);
 //app.use("/api/billing", providersRoutes);
 
+app.use(`${api}/sos`, employeesRoutes);
+
 app.use((req, res, next) => {
     res.status(404).json({ message: "Not found" });
 });
